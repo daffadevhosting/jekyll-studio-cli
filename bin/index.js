@@ -25,6 +25,14 @@ const API_BASE_URL = 'http://localhost:3000/api';
 async function writeStructureToDisk(basePath, structure) {
   await fs.ensureDir(basePath);
 
+  // --- TAMBAHAN BARU: Buat Gemfile ---
+  const gemfileContent = `source "https://rubygems.org"\n\ngem "jekyll", "~> 4.3"\n\ngroup :jekyll_plugins do\n  gem "jekyll-feed"\n  gem "jekyll-sitemap"\nend\n`;
+  await fs.writeFile(path.join(basePath, 'Gemfile'), gemfileContent);
+
+  // --- TAMBAHAN BARU: Buat .gitignore ---
+  const gitignoreContent = `_site/\n.sass-cache/\n.jekyll-cache/\n.jekyll-metadata\n.bundle/\nvendor/\nGemfile.lock\n*.gem\n.DS_Store\n`;
+  await fs.writeFile(path.join(basePath, '.gitignore'), gitignoreContent);
+
   // Tulis file konfigurasi
   if (structure.config) {
     await fs.writeFile(path.join(basePath, '_config.yml'), yaml.stringify(structure.config));
@@ -105,7 +113,7 @@ async function runDockerCommand(command) {
 program
   .name('jekyll-studio')
   .description('CLI untuk mengelola situs Jekyll dengan kekuatan AI 🚀')
-  .version('1.1.0');
+  .version('1.2.0'); // Naikkan versi karena ada fitur baru
 
 // Perintah: create
 program
@@ -149,14 +157,13 @@ addCommand
     .action(async (title) => {
         const spinner = ora('AI sedang menulis postingan untukmu...').start();
         try {
-            // (TODO: Buat endpoint API /api/cli/add/post)
-            // const response = await axios.post(`${API_BASE_URL}/cli/add/post`, { title });
-            // const { filename, content } = response.data;
+            // Panggil endpoint API yang baru
+            const response = await axios.post(`${API_BASE_URL}/cli/add/post`, { title });
+            const { content } = response.data;
 
-            // Simulasi respons API untuk sekarang:
+            // Buat nama file dari judul dan tanggal saat ini
             const date = new Date().toISOString().split('T')[0];
-            const filename = `${date}-${title.toLowerCase().replace(/\s+/g, '-')}.md`;
-            const content = `---\nlayout: post\ntitle: "${title}"\ndate: ${date}\n---\n\nKonten yang dibuat oleh AI ada di sini...`;
+            const filename = `${date}-${title.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-')}.md`;
 
             const postsPath = path.join(process.cwd(), '_posts');
             await fs.ensureDir(postsPath);
@@ -164,11 +171,12 @@ addCommand
 
             spinner.succeed(chalk.green('Postingan baru berhasil ditambahkan!'));
             console.log(`  ✅ ${chalk.bold('File:')} ${path.join('_posts', filename)}`);
+
         } catch (error) {
             spinner.fail(chalk.red('Gagal menambahkan postingan.'));
             handleApiError(error);
         }
-    });
+  });
 
 // Perintah: serve
 program
