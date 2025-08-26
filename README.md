@@ -26,7 +26,7 @@ Sebelum menggunakan CLI ini, pastikan kamu sudah memenuhi syarat berikut:
 Install CLI ini secara global menggunakan npm agar bisa diakses dari mana saja di terminalmu.
 
 ```bash
-npm install -g jekyll-studio-cli
+npm install -g jekyll-studio
 ```
 
 ## 🛠️ Penggunaan

@@ -26,11 +26,11 @@ async function writeStructureToDisk(basePath, structure) {
   await fs.ensureDir(basePath);
 
   // --- TAMBAHAN BARU: Buat Gemfile ---
-  const gemfileContent = `source "https://rubygems.org"\n\ngem "jekyll", "~> 4.3"\n\ngroup :jekyll_plugins do\n  gem "jekyll-feed"\n  gem "jekyll-sitemap"\nend\n`;
+  const gemfileContent = `source "https://rubygems.org"\n\ngem "jekyll", "~> 4.3"\n\ngroup :jekyll_plugins do\n  gem "jekyll-feed"\n  gem "jekyll-sitemap"\n  gem "jekyll-paginate"\nend\n`;
   await fs.writeFile(path.join(basePath, 'Gemfile'), gemfileContent);
 
   // --- TAMBAHAN BARU: Buat .gitignore ---
-  const gitignoreContent = `_site/\n.sass-cache/\n.jekyll-cache/\n.jekyll-metadata\n.bundle/\nvendor/\nGemfile.lock\n*.gem\n.DS_Store\n`;
+  const gitignoreContent = `node_modules/\n_site/\n.sass-cache/\n.jekyll-cache/\n.jekyll-metadata\n.bundle/\nvendor/\nGemfile.lock\n*.gem\n.DS_Store\n.env\n`;
   await fs.writeFile(path.join(basePath, '.gitignore'), gitignoreContent);
 
   // Tulis file konfigurasi
