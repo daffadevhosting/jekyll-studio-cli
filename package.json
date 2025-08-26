@@ -1,0 +1,27 @@
+{
+  "name": "jekyll-studio",
+  "version": "1.0.0",
+  "description": "CLI for Jekyll Studio to generate and manage Jekyll sites with AI.",
+  "type": "module",
+  "repository": {
+  "type": "git",
+  "url": "https://github.com/daffadevhosting/jekyll-studio-cli.git"
+  },
+  "main": "bin/index.js",
+  "bin": {
+    "jekyll-studio": "./bin/index.js"
+  },
+  "scripts": {
+    "jekyll-studio": "npm install && npm link"
+  },
+  "keywords": ["jekyll", "cli", "ai", "gemini"],
+  "author": "Daffa Adtya",
+  "license": "CC0 1.0 Universal",
+  "dependencies": {
+    "axios": "^1.7.2",
+    "chalk": "^5.3.0",
+    "commander": "^12.1.0",
+    "inquirer": "^9.2.23",
+    "ora": "^8.0.1"
+  }
+}
