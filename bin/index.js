@@ -5,60 +5,206 @@ import { Command } from 'commander';
 import axios from 'axios';
 import ora from 'ora';
 import chalk from 'chalk';
+import fs from 'fs-extra';
+import path from 'path';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+import yaml from 'yaml';
 
-// Inisialisasi program commander
+// --- Konfigurasi dan Fungsi Bantuan ---
+
+const execAsync = promisify(exec);
 const program = new Command();
-
-// Konfigurasi dasar untuk API
 const API_BASE_URL = 'http://localhost:3000/api';
+
+/**
+ * Fungsi untuk menulis file-file dari struktur JSON ke disk.
+ * @param {string} basePath - Path direktori tempat proyek akan dibuat.
+ * @param {object} structure - Objek struktur situs dari API.
+ */
+async function writeStructureToDisk(basePath, structure) {
+  await fs.ensureDir(basePath);
+
+  // Tulis file konfigurasi
+  if (structure.config) {
+    await fs.writeFile(path.join(basePath, '_config.yml'), yaml.stringify(structure.config));
+  }
+
+  // Tulis layouts
+  if (structure.layouts && structure.layouts.length > 0) {
+    const layoutsDir = path.join(basePath, '_layouts');
+    await fs.ensureDir(layoutsDir);
+    for (const layout of structure.layouts) {
+      await fs.writeFile(path.join(layoutsDir, layout.name), layout.content);
+    }
+  }
+
+  // Tulis includes
+  if (structure.includes && structure.includes.length > 0) {
+      const includesDir = path.join(basePath, '_includes');
+      await fs.ensureDir(includesDir);
+      for (const include of structure.includes) {
+          await fs.writeFile(path.join(includesDir, include.name), include.content);
+      }
+  }
+
+  // Tulis posts
+  if (structure.posts && structure.posts.length > 0) {
+    const postsDir = path.join(basePath, '_posts');
+    await fs.ensureDir(postsDir);
+    for (const post of structure.posts) {
+      const filename = `${post.date}-${post.title.toLowerCase().replace(/\s+/g, '-')}.md`;
+      await fs.writeFile(path.join(postsDir, filename), post.content);
+    }
+  }
+
+  // Tulis pages
+  if (structure.pages && structure.pages.length > 0) {
+    for (const page of structure.pages) {
+      await fs.writeFile(path.join(basePath, page.name), page.content);
+    }
+  }
+
+  // Tulis assets
+  if (structure.assets) {
+    const assetsDir = path.join(basePath, 'assets');
+    await fs.ensureDir(assetsDir);
+    if (structure.assets.css) {
+      const cssDir = path.join(assetsDir, 'css');
+      await fs.ensureDir(cssDir);
+      await fs.writeFile(path.join(cssDir, 'style.css'), structure.assets.css);
+    }
+    if (structure.assets.js) {
+        const jsDir = path.join(assetsDir, 'js');
+        await fs.ensureDir(jsDir);
+        await fs.writeFile(path.join(jsDir, 'script.js'), structure.assets.js);
+    }
+  }
+}
+
+/**
+ * Menjalankan perintah Docker secara lokal.
+ * @param {string} command - Perintah Docker yang akan dijalankan.
+ */
+async function runDockerCommand(command) {
+    const spinner = ora(`Running local command: ${command}...`).start();
+    try {
+        const { stdout, stderr } = await execAsync(command);
+        spinner.succeed('Command finished.');
+        if (stdout) console.log(stdout);
+        if (stderr) console.error(chalk.yellow(stderr));
+    } catch (error) {
+        spinner.fail('Command failed.');
+        console.error(chalk.red(error.stderr || error.message));
+        process.exit(1);
+    }
+}
+
+// --- Definisi Perintah CLI ---
 
 program
   .name('jekyll-studio')
-  .description('CLI to manage Jekyll sites with the power of AI')
-  .version('1.0.0');
+  .description('CLI untuk mengelola situs Jekyll dengan kekuatan AI 🚀')
+  .version('1.1.0');
 
-// Mendefinisikan perintah "create"
+// Perintah: create
 program
   .command('create')
-  .description('Create a new Jekyll site from an AI prompt')
-  .argument('<prompt>', 'A description of the site you want to create (e.g., "a blog for a coffee shop")')
-  .option('-n, --name <siteName>', 'Specify a name for the site directory')
+  .description('Buat situs Jekyll baru dari prompt AI dan simpan secara lokal.')
+  .argument('<prompt>', 'Deskripsi situs yang ingin kamu buat')
+  .option('-n, --name <siteName>', 'Tentukan nama direktori untuk situs')
   .action(async (prompt, options) => {
-    const spinner = ora('Communicating with the AI to design your site...').start();
-
+    const spinner = ora('Menghubungi AI untuk merancang situsmu...').start();
     try {
-      const payload = {
-        prompt: prompt,
-        name: options.name,
-      };
-
-      // Panggil backend API
-      const response = await axios.post(`${API_BASE_URL}/sites/create`, payload);
+      const response = await axios.post(`${API_BASE_URL}/cli/create`, { prompt });
+      const { structure } = response.data;
       
-      const { site, buildResult } = response.data;
+      const siteName = options.name || structure.name;
+      const sitePath = path.join(process.cwd(), siteName);
 
-      if (response.status === 201 && site) {
-        spinner.succeed(chalk.green('Site created successfully!'));
-        console.log(`
-  ✅ ${chalk.bold('ID:')} ${site.id}
-  ✅ ${chalk.bold('Name:')} ${site.name}
-  ✅ ${chalk.bold('Status:')} ${site.status}
-  ✅ ${chalk.bold('Build Time:')} ${buildResult.buildTime}ms
-        `);
-      } else {
-        throw new Error(response.data.error || 'An unknown error occurred.');
-      }
+      spinner.text = 'Struktur diterima! Membuat file secara lokal...';
+      await writeStructureToDisk(sitePath, structure);
+      
+      spinner.succeed(chalk.green('Proyek berhasil dibuat!'));
+      console.log(`
+  ✅ ${chalk.bold('Lokasi:')} ${sitePath}
+  
+  Untuk memulai, jalankan perintah berikut:
+  ${chalk.cyan(`cd ${siteName}`)}
+  ${chalk.cyan(`jekyll-studio serve`)}
+      `);
     } catch (error) {
-      spinner.fail(chalk.red('Failed to create site.'));
-      if (error.response) {
-        console.error(chalk.red(`  Error ${error.response.status}: ${error.response.data.error}`));
-      } else {
-        console.error(chalk.red(`  An unexpected error occurred: ${error.message}`));
-      }
+      spinner.fail(chalk.red('Gagal membuat situs.'));
+      handleApiError(error);
     }
   });
 
-// Tambahkan perintah lain di sini (misalnya list, build, serve)
+// Perintah: add
+const addCommand = program.command('add').description('Tambahkan konten baru ke proyek Jekyll yang ada dengan AI.');
+
+addCommand
+    .command('post')
+    .description('Buat postingan blog baru dari sebuah judul.')
+    .argument('<title>', 'Judul untuk postingan blog baru')
+    .action(async (title) => {
+        const spinner = ora('AI sedang menulis postingan untukmu...').start();
+        try {
+            // (TODO: Buat endpoint API /api/cli/add/post)
+            // const response = await axios.post(`${API_BASE_URL}/cli/add/post`, { title });
+            // const { filename, content } = response.data;
+
+            // Simulasi respons API untuk sekarang:
+            const date = new Date().toISOString().split('T')[0];
+            const filename = `${date}-${title.toLowerCase().replace(/\s+/g, '-')}.md`;
+            const content = `---\nlayout: post\ntitle: "${title}"\ndate: ${date}\n---\n\nKonten yang dibuat oleh AI ada di sini...`;
+
+            const postsPath = path.join(process.cwd(), '_posts');
+            await fs.ensureDir(postsPath);
+            await fs.writeFile(path.join(postsPath, filename), content);
+
+            spinner.succeed(chalk.green('Postingan baru berhasil ditambahkan!'));
+            console.log(`  ✅ ${chalk.bold('File:')} ${path.join('_posts', filename)}`);
+        } catch (error) {
+            spinner.fail(chalk.red('Gagal menambahkan postingan.'));
+            handleApiError(error);
+        }
+    });
+
+// Perintah: serve
+program
+  .command('serve')
+  .description('Jalankan server pengembangan Jekyll lokal menggunakan Docker.')
+  .option('-p, --port <port>', 'Port yang akan digunakan', '4000')
+  .action((options) => {
+    console.log(chalk.blue('Mencoba menjalankan server pengembangan Jekyll...'));
+    console.log(chalk.yellow('Pastikan Docker sudah berjalan di komputermu.'));
+    const projectPath = process.cwd();
+    // Ganti 'jekyll-studio-image' dengan nama image Docker Jekyll-mu
+    const dockerCommand = `docker run --rm -it -p ${options.port}:4000 -v "${projectPath}":/srv/jekyll jekyll/jekyll jekyll serve`;
+    runDockerCommand(dockerCommand);
+  });
+
+// Perintah: build
+program
+    .command('build')
+    .description('Bangun situs Jekyll secara lokal menggunakan Docker.')
+    .action(() => {
+        console.log(chalk.blue('Mencoba membangun situs Jekyll...'));
+        const projectPath = process.cwd();
+        // Ganti 'jekyll-studio-image' dengan nama image Docker Jekyll-mu
+        const dockerCommand = `docker run --rm -v "${projectPath}":/srv/jekyll jekyll/jekyll jekyll build`;
+        runDockerCommand(dockerCommand);
+    });
+    
+// Fungsi bantuan untuk menangani error API
+function handleApiError(error) {
+    if (error.response) {
+        console.error(chalk.red(`  Error ${error.response.status}: ${error.response.data.error || 'Terjadi kesalahan di server'}`));
+    } else {
+        console.error(chalk.red(`  Kesalahan tidak terduga: ${error.message}`));
+        console.log(chalk.yellow('  Pastikan backend Jekyll Studio API sudah berjalan.'));
+    }
+}
 
 // Parsing argumen dari terminal
 program.parse(process.argv);
