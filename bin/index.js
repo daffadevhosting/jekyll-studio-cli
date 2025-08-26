@@ -188,8 +188,24 @@ program
     console.log(chalk.yellow('Pastikan Docker sudah berjalan di komputermu.'));
     const projectPath = process.cwd();
     // Ganti 'jekyll-studio-image' dengan nama image Docker Jekyll-mu
-    const dockerCommand = `docker run --rm -it -p ${options.port}:4000 -v "${projectPath}":/srv/jekyll jekyll/jekyll jekyll serve`;
-    runDockerCommand(dockerCommand);
+    const dockerCommand = `docker run --rm -i -p ${options.port}:4000 -v "${projectPath}":/srv/jekyll jekyll/jekyll jekyll serve --livereload`;
+    const child = exec(dockerCommand);
+
+    child.stdout.on('data', (data) => {
+      console.log(data.toString());
+    });
+
+    child.stderr.on('data', (data) => {
+      console.error(chalk.yellow(data.toString()));
+    });
+
+    child.on('close', (code) => {
+      if (code !== 0) {
+        console.log(chalk.red(`Server berhenti dengan kode error: ${code}`));
+      } else {
+        console.log(chalk.green('Server berhasil dihentikan.'));
+      }
+    });
   });
 
 // Perintah: build
@@ -201,7 +217,23 @@ program
         const projectPath = process.cwd();
         // Ganti 'jekyll-studio-image' dengan nama image Docker Jekyll-mu
         const dockerCommand = `docker run --rm -v "${projectPath}":/srv/jekyll jekyll/jekyll jekyll build`;
-        runDockerCommand(dockerCommand);
+      const child = exec(dockerCommand);
+
+      child.stdout.on('data', (data) => {
+        console.log(data.toString());
+      });
+
+      child.stderr.on('data', (data) => {
+        console.error(chalk.yellow(data.toString()));
+      });
+
+      child.on('close', (code) => {
+        if (code !== 0) {
+          console.log(chalk.red(`Server berhenti dengan kode error: ${code}`));
+        } else {
+          console.log(chalk.green('Server berhasil dihentikan.'));
+        }
+      });
     });
     
 // Fungsi bantuan untuk menangani error API
