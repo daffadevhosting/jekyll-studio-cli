@@ -37,6 +37,7 @@
     "fs-extra": "^11.3.1",
     "inquirer": "^9.2.23",
     "ora": "^8.0.1",
+    "update-notifier": "^7.3.1",
     "yaml": "^2.8.1"
   },
   "devDependencies": {

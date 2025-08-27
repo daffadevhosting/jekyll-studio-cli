@@ -11,6 +11,24 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import yaml from 'yaml';
 import inquirer from 'inquirer';
+import updateNotifier from 'update-notifier';
+import { createRequire } from 'module';
+
+// --- NOTIFIKASI UPDATE ---
+const require = createRequire(import.meta.url);
+const packageJson = require('./package.json');
+const notifier = updateNotifier({ pkg: packageJson });
+
+// Tampilkan notifikasi update jika ada
+if (notifier.update) {
+  notifier.notify({
+    message: `Update tersedia! ${chalk.dim(notifier.update.current)} → ${chalk.green(notifier.update.latest)}\nJalankan ${chalk.cyan('npm install -g jekyll-studio')} untuk update.`,
+    isGlobal: true
+  });
+  
+  // Beri jeda 2 detik agar user bisa membaca notifikasi
+  await new Promise(resolve => setTimeout(resolve, 2000));
+}
 
 // --- Konfigurasi dan Fungsi Bantuan ---
 
