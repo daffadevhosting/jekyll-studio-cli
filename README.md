@@ -186,7 +186,7 @@ Ingin berkontribusi atau mengembangkan CLI ini?
     ```
 2.  **Install dependensi:**
     ```bash
-    npm run jekyll-studio
+    npm run install-studio
     ```
     Sekarang kamu bisa menjalankan perintah `jekyll-studio` di terminalmu yang akan langsung menggunakan kode dari folder lokal ini.
 
