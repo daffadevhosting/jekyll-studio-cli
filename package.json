@@ -1,6 +1,6 @@
 {
   "name": "jekyll-studio",
-  "version": "1.3.3",
+  "version": "1.3.4",
   "description": "CLI for Jekyll Studio to generate and manage Jekyll sites with AI.",
   "type": "module",
   "repository": {
