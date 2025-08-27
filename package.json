@@ -16,7 +16,11 @@
     "dev": "node bin/index.js --help",
     "test": "echo \"No tests specified\"",
     "lint": "echo \"Linting skipped\"",
-    "prepublishOnly": "echo \"Prepublish checks completed\""
+    "prepublishOnly": "echo \"Prepublish checks completed\"",
+    "install-local": "npm install && npm link",
+    "build": "echo \"No build process needed\"",
+    "version": "npm run lint && git add .",
+    "postversion": "git push && git push --tags"
   },
   "keywords": [
     "jekyll",
@@ -28,7 +32,7 @@
     "portfolio",
     "generator"
   ],
-  "author": "Daffa Adtya <daffa@email.com>",
+  "author": "Daffa Adtya <daffaadityadwiputra@gmail.com>",
   "license": "CC0-1.0",
   "dependencies": {
     "axios": "^1.7.2",
@@ -39,13 +43,6 @@
     "ora": "^8.0.1",
     "update-notifier": "^7.3.1",
     "yaml": "^2.8.1"
-  },
-  "devDependencies": {
-    "eslint": "^8.57.0",
-    "eslint-config-standard": "^17.1.0",
-    "eslint-plugin-import": "^2.29.0",
-    "eslint-plugin-n": "^16.6.2",
-    "eslint-plugin-promise": "^6.1.1"
   },
   "engines": {
     "node": ">=18.0.0"
