@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.2.0] - 2025-08-27
+## [1.3.0] - 2025-08-27
 
 ### Added
 - Perintah `doctor` untuk memeriksa environment dan dependencies
@@ -17,6 +17,8 @@
 - Logging yang lebih berwarna dan informatif
 - Dokumentasi yang lebih komprehensif
 - Validasi environment sebelum menjalankan perintah
+
+## [1.3.0] - 2025-08-27
 
 ### Fixed
 - Masalah escaping quotes pada respons AI
