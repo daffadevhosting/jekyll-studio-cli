@@ -27,17 +27,45 @@ class ConfigService {
 }
 
 class NotificationService {
-  static checkForUpdates() {
+  static async checkForUpdates() {
     try {
       const packageJson = ConfigService.getPackageInfo();
-      if (packageJson) {
-        updateNotifier({ pkg: packageJson }).notify({
-          message: `Update tersedia! ${chalk.dim(packageJson.version)} → {latestVersion}\nJalankan ${chalk.cyan('npm install -g jekyll-studio@latest')} untuk update.`,
-          isGlobal: true
-        });
+      if (!packageJson) return;
+
+      // Check once per day
+      const updateCheckFile = '/tmp/jekyll-studio-update-check';
+      const today = new Date().toDateString();
+      
+      if (fs.existsSync(updateCheckFile)) {
+        const lastCheck = fs.readFileSync(updateCheckFile, 'utf8');
+        if (lastCheck === today) return; // Already checked today
+      }
+
+      // Save that we checked today
+      fs.writeFileSync(updateCheckFile, today);
+
+      // Check npm for latest version
+      const { stdout } = await execAsync('npm view jekyll-studio version');
+      const latestVersion = stdout.trim();
+      const currentVersion = packageJson.version;
+
+      if (latestVersion && latestVersion !== currentVersion) {
+        console.log(chalk.yellow(`
+╔══════════════════════════════════════════════════════╗
+║                 ${chalk.bold('UPDATE AVAILABLE!')}                 ║
+║                                                      ║
+║    Current: ${chalk.red(currentVersion)}    →    Latest: ${chalk.green(latestVersion)}    ║
+║                                                      ║
+║    Run: ${chalk.cyan('npm install -g jekyll-studio@latest')}    ║
+║                                                      ║
+╚══════════════════════════════════════════════════════╝
+        `));
+        
+        // Wait a bit so user can read the message
+        await new Promise(resolve => setTimeout(resolve, 3000));
       }
     } catch (error) {
-      console.log(chalk.gray('🔧 Jekyll Studio CLI initialized'));
+      // Silent fail - don't disturb user with update check errors
     }
   }
 }
@@ -320,15 +348,16 @@ import inquirer from 'inquirer';
 
 class CreateCommand {
   static async execute(prompt, options) {
-    const spinner = ora('🧠 Menghubungi AI untuk merancang situsmu...').start();
+    let spinner = ora('🧠 Menghubungi AI untuk merancang situsmu...').start();
     
     try {
       const { structure } = await ApiService.createSite(prompt, options);
       const siteName = options.name || structure.name || 'jekyll-site';
       const sitePath = path.join(process.cwd(), siteName);
 
-      // Check if directory exists
       if (await fs.pathExists(sitePath)) {
+        spinner.stop(); // Stop spinner sebelum prompt user
+        
         const { overwrite } = await inquirer.prompt([
           {
             type: 'confirm',
@@ -339,14 +368,18 @@ class CreateCommand {
         ]);
         
         if (!overwrite) {
-          spinner.fail('Dibatalkan oleh pengguna.');
+          console.log(chalk.yellow('❌ Dibatalkan oleh pengguna.'));
           return;
         }
         
+        // Start new spinner untuk penghapusan
+        spinner = ora('🗑️  Menghapus direktori lama...').start();
         await fs.remove(sitePath);
+        spinner.succeed('Direktori lama dihapus.');
       }
 
-      spinner.text = '📁 Membuat struktur file...';
+      // Start spinner untuk pembuatan file
+      spinner = ora('📁 Membuat struktur file...').start();
       await FileManager.writeStructureToDisk(sitePath, structure);
       
       spinner.succeed(chalk.green('✅ Proyek berhasil dibuat!'));
@@ -354,7 +387,9 @@ class CreateCommand {
       this.showSuccessMessage(siteName, structure);
 
     } catch (error) {
-      spinner.fail(chalk.red('❌ Gagal membuat situs.'));
+      if (spinner.isSpinning) {
+        spinner.fail(chalk.red('❌ Gagal membuat situs.'));
+      }
       UIService.handleApiError(error);
     }
   }
@@ -606,7 +641,9 @@ function createProgram() {
 // === INITIALIZATION ===
 function main() {
   // Check for updates
-  NotificationService.checkForUpdates();
+  NotificationService.checkForUpdates().catch(() => {
+    // Ignore errors in update check
+  });
 
   // Create and run program
   const program = createProgram();
