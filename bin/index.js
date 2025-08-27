@@ -12,26 +12,27 @@ import { promisify } from 'util';
 import yaml from 'yaml';
 import inquirer from 'inquirer';
 import updateNotifier from 'update-notifier';
-import { createRequire } from 'module';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+// --- Dapatkan path ke package.json yang benar ---
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const packageJsonPath = path.join(__dirname, '..', 'package.json');
 
 // --- NOTIFIKASI UPDATE ---
-const require = createRequire(import.meta.url);
-const packageJson = require('./package.json');
-const notifier = updateNotifier({ pkg: packageJson });
-
-// Tampilkan notifikasi update jika ada
-if (notifier.update) {
-  notifier.notify({
-    message: `Update tersedia! ${chalk.dim(notifier.update.current)} → ${chalk.green(notifier.update.latest)}\nJalankan ${chalk.cyan('npm install -g jekyll-studio')} untuk update.`,
+try {
+  const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+  updateNotifier({ pkg: packageJson }).notify({
+    message: `Update tersedia! ${chalk.dim(packageJson.version)} → {latestVersion}\nJalankan ${chalk.cyan('npm install -g jekyll-studio@latest')} untuk update.`,
     isGlobal: true
   });
-  
-  // Beri jeda 2 detik agar user bisa membaca notifikasi
-  await new Promise(resolve => setTimeout(resolve, 2000));
+} catch (error) {
+  // Silent fail - jangan tampilkan error jika package.json tidak ditemukan
+  console.log(chalk.gray('🔧 Jekyll Studio CLI initialized'));
 }
 
 // --- Konfigurasi dan Fungsi Bantuan ---
-
 const execAsync = promisify(exec);
 const program = new Command();
 const API_BASE_URL = process.env.JEKYLL_STUDIO_API_URL || 'http://localhost:3000/api';
