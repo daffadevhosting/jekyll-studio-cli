@@ -32,38 +32,12 @@ class NotificationService {
       const packageJson = ConfigService.getPackageInfo();
       if (!packageJson) return;
 
-      // Check once per day
-      const updateCheckFile = '/tmp/jekyll-studio-update-check';
-      const today = new Date().toDateString();
-      
-      if (fs.existsSync(updateCheckFile)) {
-        const lastCheck = fs.readFileSync(updateCheckFile, 'utf8');
-        if (lastCheck === today) return; // Already checked today
-      }
+      const notifier = updateNotifier({
+        pkg: packageJson,
+        updateCheckInterval: 1000 * 60 * 60 * 24 // 1 day
+      });
 
-      // Save that we checked today
-      fs.writeFileSync(updateCheckFile, today);
-
-      // Check npm for latest version
-      const { stdout } = await execAsync('npm view jekyll-studio version');
-      const latestVersion = stdout.trim();
-      const currentVersion = packageJson.version;
-
-      if (latestVersion && latestVersion !== currentVersion) {
-        console.log(chalk.yellow(`
-╔══════════════════════════════════════════════════════╗
-║                 ${chalk.bold('UPDATE AVAILABLE!')}                 ║
-║                                                      ║
-║    Current: ${chalk.red(currentVersion)}    →    Latest: ${chalk.green(latestVersion)}    ║
-║                                                      ║
-║    Run: ${chalk.cyan('npm install -g jekyll-studio@latest')}    ║
-║                                                      ║
-╚══════════════════════════════════════════════════════╝
-        `));
-        
-        // Wait a bit so user can read the message
-        await new Promise(resolve => setTimeout(resolve, 3000));
-      }
+      notifier.notify({ isGlobal: true });
     } catch (error) {
       // Silent fail - don't disturb user with update check errors
     }
@@ -75,8 +49,8 @@ class UIService {
     console.log(chalk.blue(`
   ╔══════════════════════════════════════════════════════╗
   ║                                                      ║
-  ║                ${chalk.bold('JEKYLL STUDIO CLI')}                 ║
-  ║           ${chalk.yellow('Build Jekyll Sites with AI 🚀')}          ║
+  ║                ${chalk.bold('JEKYLL STUDIO CLI')}                     ║
+  ║           ${chalk.yellow('Build Jekyll Sites with AI 🚀')}              ║
   ║                                                      ║
   ╚══════════════════════════════════════════════════════╝
     `));
@@ -86,7 +60,7 @@ class UIService {
     if (error.response) {
       console.error(chalk.red(`  Error ${error.response.status}: ${error.response.data.error || 'Terjadi kesalahan di server'}`));
       if (error.response.status === 404) {
-        console.log(chalk.yellow('  Pastikan Jekyll Studio API sudah berjalan di http://localhost:3000'));
+        console.log(chalk.yellow('  freeUser: Pastikan [Jekyll Studio API](https://github.com/daffadevhosting/jekyll-studio-api) sudah berjalan di http://localhost:3000'));
       }
     } else if (error.code === 'ECONNREFUSED') {
       console.error(chalk.red('  Tidak dapat terhubung ke Jekyll Studio API'));
@@ -183,14 +157,14 @@ ${structure.description || 'A Jekyll site generated with Jekyll Studio AI'}
 ## Getting Started
 
 1. Install dependencies:
-   \`\`\`bash
+   \
    bundle install
-   \`\`\`
+   \
 
 2. Serve locally:
-   \`\`\`bash
+   \
    bundle exec jekyll serve --livereload
-   \`\`\`
+   \
 
 3. Open in browser: http://localhost:4000
 `;
@@ -384,7 +358,7 @@ class CreateCommand {
       
       spinner.succeed(chalk.green('✅ Proyek berhasil dibuat!'));
       
-      this.showSuccessMessage(siteName, structure);
+      CreateCommand.showSuccessMessage(siteName, structure);
 
     } catch (error) {
       if (spinner.isSpinning) {
@@ -446,9 +420,9 @@ class ServeCommand {
     const useDocker = options.docker && await SystemUtils.checkDocker();
     
     if (useDocker) {
-      await this.serveWithDocker(options.port);
+      await ServeCommand.serveWithDocker(options.port);
     } else {
-      await this.serveWithJekyll(options.port);
+      await ServeCommand.serveWithJekyll(options.port);
     }
   }
 
@@ -490,9 +464,9 @@ class BuildCommand {
     const useDocker = options.docker && await SystemUtils.checkDocker();
     
     if (useDocker) {
-      await this.buildWithDocker();
+      await BuildCommand.buildWithDocker();
     } else {
-      await this.buildWithJekyll();
+      await BuildCommand.buildWithJekyll();
     }
     
     console.log(chalk.green('📦 Situs siap di-deploy! File ada di folder _site/'));
@@ -567,7 +541,7 @@ class DoctorCommand {
       console.log(`${status} ${check.name}: ${chalk.cyan(result.version)}`);
     }
     
-    await this.showTips();
+    await DoctorCommand.showTips();
   }
 
   static async showTips() {
@@ -584,11 +558,12 @@ class DoctorCommand {
 // === MAIN PROGRAM ===
 function createProgram() {
   const program = new Command();
+  const packageJson = ConfigService.getPackageInfo() || { version: '0.0.0' };
 
   program
     .name('jekyll-studio')
     .description('CLI untuk mengelola situs Jekyll dengan kekuatan AI 🚀')
-    .version('1.3.0')
+    .version(packageJson.version)
     .hook('preAction', () => {
       UIService.showHeader();
     });

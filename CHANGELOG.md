@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.7] - 2025-08-28
+
+### Fixed
+- Mengatasi `TypeError` pada beberapa perintah (`doctor`, `create`, `serve`, `build`) yang disebabkan oleh konteks `this` yang salah.
+- Memperbaiki mekanisme notifikasi update dengan menggunakan `update-notifier` standar.
+- Sinkronisasi versi CLI yang ditampilkan (`--version`) dengan versi di `package.json`.
+
 ## [1.3.0] - 2025-08-27
 
 ### Added
