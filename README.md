@@ -7,6 +7,8 @@
 
 Ucapkan selamat tinggal pada `jekyll new` manual. **Sekarang**. Cukup tuliskan idemu, dan biarkan AI yang membangun fondasi situsmu dalam hitungan detik.
 
+![screen](https://github.com/daffadevhosting/jekyll-studio-api/blob/master/styles/cli.png?raw=true)
+
 ## ✨ Fitur Utama
 
 * **🤖 AI-Powered Generation**: Buat seluruh struktur situs Jekyll dari prompt teks
@@ -15,6 +17,7 @@ Ucapkan selamat tinggal pada `jekyll new` manual. **Sekarang**. Cukup tuliskan i
 * **🚀 Live Reload**: Server development dengan livereload otomatis
 * **🏥 Health Check**: Periksa environment dengan perintah `doctor`
 * **🎨 Tailwind CSS Support**: Generate situs dengan Tailwind CSS
+* **🛍️ E-commerce context Support** Generate Online Store dengan Snipcart & Tailwind CSS
 
 ## ⚙️ Prasyarat
 
@@ -88,8 +91,8 @@ jekyll-studio create "Buatkan website portofolio untuk seorang fotografer dengan
 # Membuat blog dengan nama direktori spesifik 'blog-masakan'
 jekyll-studio create "Blog tentang resep masakan Indonesia" --name blog-masakan
 
-# [NEXT UPDATE] Membuat Toko Online dari NOL **(ONDEV)**
-jekyll-studio create "Buatkan saya toko online untuk menjual biji kopi. Gunakan Snipcart untuk keranjang belanja. Harus ada halaman untuk setiap produk kopi, halaman 'Tentang Kami', dan halaman kontak." --name "kedai-kopi-static"
+# [NEW] Membuat Toko Online dari NOL **(BETA)**
+jekyll-studio create "Buat situs Jekyll untuk toko online biji kopi dengan Snipcart dan Tailwind CSS" --name my-kopi-store
 ```
 
 - Menambahkan Postingan blog.
@@ -190,18 +193,6 @@ Ingin berkontribusi atau mengembangkan CLI ini?
     ```
     Sekarang kamu bisa menjalankan perintah `jekyll-studio` di terminalmu yang akan langsung menggunakan kode dari folder lokal ini.
 
-## 📄 Lisensi
-
-Proyek ini dilisensikan di bawah Lisensi [CC0 1.0 Universal](https://creativecommons.org/publicdomain/zero/1.0/).
-
-## 🙏 Acknowledgments
-
-[Jekyll](https://jekyllrb.com/) - Static site generator
-
-[Google Gemini](https://deepmind.google/technologies/gemini/) - AI model
-
-[Commander.js](https://github.com/tj/commander.js) - CLI framework
-
 ## 🎯 **Fitur Baru yang Ditambahkan:**
 
 1. **`doctor` command** - Memeriksa environment dan dependencies
@@ -213,6 +204,8 @@ Proyek ini dilisensikan di bawah Lisensi [CC0 1.0 Universal](https://creativecom
 7. **Template files** - README.md dan .gitkeep untuk images
 8. **Port configuration** - Support custom port untuk server
 9. **Tailwind detection** - Otomatis detect prompt Tailwind
+10. **Deteksi E-commerce** - Menggunakan string matching sederhana pada prompt untuk fleksibilitas.
+11. **Integrasi Snipcart** - Script dan CSS ditambahkan secara kondisional. Pastikan untuk ganti `<your_snipcart_api_key>` dengan key asli dari Snipcart.
 
 ## 🔧 **Perbaikan Utama:**
 
@@ -220,3 +213,16 @@ Proyek ini dilisensikan di bawah Lisensi [CC0 1.0 Universal](https://creativecom
 2. **Directory existence check** - Mencegah overwrite tanpa konfirmasi
 3. **Better API error messages** - Informasi error yang lebih jelas
 4. **Improved Docker commands** - Command yang lebih robust
+5. **Penanganan Collections** - Menulis koleksi seperti `_products`. Ini perlu ditambahkan agar produk dari `collections.products` disimpan ke folder `_products`.
+
+## 📄 Lisensi
+
+Proyek ini dilisensikan di bawah Lisensi [CC0 1.0 Universal](https://creativecommons.org/publicdomain/zero/1.0/).
+
+## 🙏 Acknowledgments
+
+[Jekyll](https://jekyllrb.com/) - Static site generator
+
+[Google Gemini](https://deepmind.google/technologies/gemini/) - AI model
+
+[Commander.js](https://github.com/tj/commander.js) - CLI framework

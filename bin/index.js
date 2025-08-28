@@ -202,6 +202,9 @@ class FileManager {
       // Write pages
       await this.writePages(basePath, structure.pages);
 
+      // Write collections (e.g., products)
+      await this.writeCollections(basePath, structure.collections);
+
       // Write assets
       await this.writeAssets(basePath, structure.assets);
 
@@ -284,6 +287,23 @@ class FileManager {
     const imagesDir = path.join(assetsDir, 'images');
     await fs.ensureDir(imagesDir);
     await fs.writeFile(path.join(imagesDir, '.gitkeep'), '');
+  }
+
+  //[BARU] untuk menangani collections
+  static async writeCollections(basePath, collections) {
+    if (!collections || typeof collections !== 'object') return;
+
+    for (const [collectionName, items] of Object.entries(collections)) {
+      if (!Array.isArray(items) || !items.length) continue;
+
+      const collectionDir = path.join(basePath, `_${collectionName}`);
+      await fs.ensureDir(collectionDir);
+
+      for (const item of items) {
+        const filename = item.name.match(/\.(html|md)$/) ? item.name : `${item.name}.md`;
+        await fs.writeFile(path.join(collectionDir, filename), item.content);
+      }
+    }
   }
 }
 
