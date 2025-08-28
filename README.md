@@ -36,7 +36,7 @@ npm install -g jekyll-studio
 
 1. Jalankan API (di terminal terpisah):
 ```bash
-git clone https://github.com/daffadevhosting/jekyll-studio-api
+git clone https://github.com/daffadevhosting/jekyll-studio-api.git
 cd jekyll-studio-api
 npm install
 npm run dev
@@ -156,7 +156,7 @@ jekyll-studio doctor
 ## 🐛 Troubleshooting
 
 **Cannot connect to API**
-* Pastikan Jekyll Studio API sudah berjalan di http://localhost:3000
+* Pastikan **Jekyll Studio API** sudah berjalan di http://localhost:3000
 
 **Docker not found**
 * Install Docker atau gunakan --no-docker flag
